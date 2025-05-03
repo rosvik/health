@@ -23,6 +23,29 @@ pub fn try_setup_tables(pool: &Pool) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Deserialize)]
+pub struct HealthCheckRow {
+    pub name: String,
+    pub status: u16,
+    pub response_time: u64,
+}
+pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Result<(), String> {
+    let conn = pool.get().unwrap();
+    match conn.execute(
+        "INSERT INTO health_checks (name, status, response_time) VALUES (?, ?, ?)",
+        [
+            &endpoint.name,
+            &endpoint.status.to_string(),
+            &endpoint.response_time.to_string(),
+        ],
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            println!("Error inserting health check: {}", e);
+            Err(e.to_string())
+        }
+    }
+}
 pub async fn get_health_checks(pool: &Pool) -> Result<Vec<HealthCheckRow>, String> {
     let conn = pool.get().unwrap();
 
@@ -46,30 +69,6 @@ pub async fn get_health_checks(pool: &Pool) -> Result<Vec<HealthCheckRow>, Strin
     }
 
     Ok(health_checks)
-}
-
-#[derive(Deserialize)]
-pub struct HealthCheckRow {
-    pub name: String,
-    pub status: u16,
-    pub response_time: u64,
-}
-pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Result<(), String> {
-    let conn = pool.get().unwrap();
-    match conn.execute(
-        "INSERT INTO health_checks (name, status, response_time) VALUES (?, ?, ?)",
-        [
-            &endpoint.name,
-            &endpoint.status.to_string(),
-            &endpoint.response_time.to_string(),
-        ],
-    ) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            println!("Error inserting health check: {}", e);
-            Err(e.to_string())
-        }
-    }
 }
 
 #[tokio::test]
