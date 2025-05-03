@@ -1,4 +1,4 @@
-interval = 10_000
+interval = 10
 database = "health.db"
 
 [[endpoints]]

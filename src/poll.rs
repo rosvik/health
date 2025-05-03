@@ -7,7 +7,7 @@ pub async fn monitor(pool: Pool, config: Config) {
         for endpoint in config.endpoints.clone() {
             poll(pool.clone(), endpoint).await;
         }
-        sleep(Duration::from_millis(config.interval)).await;
+        sleep(Duration::from_secs(config.interval)).await;
     }
 }
 
