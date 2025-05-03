@@ -5,6 +5,7 @@ use std::{fs::File, io::Read};
 pub struct Config {
     pub endpoints: Vec<Endpoint>,
     pub interval: u64,
+    pub database: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

@@ -7,8 +7,9 @@ mod serve;
 
 #[tokio::main]
 async fn main() {
-    let pool = db::initialize_pool();
     let config = Config::load_from_file("config.toml");
+    let pool = db::get_pool(config.database.clone());
+    db::try_setup_tables(&pool).unwrap();
 
     let serve_thread = tokio::spawn(serve::serve(pool.clone()));
     let poll_health_thread = tokio::spawn(poll::monitor(pool.clone(), config.clone()));

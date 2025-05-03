@@ -2,13 +2,25 @@ use serde::Deserialize;
 
 pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 
-pub fn initialize_pool() -> Pool {
-    let manager = r2d2_sqlite::SqliteConnectionManager::memory();
-    let pool = r2d2::Pool::new(manager).unwrap();
+pub fn get_pool(database_location: Option<String>) -> Pool {
+    let manager = match database_location {
+        Some(location) => r2d2_sqlite::SqliteConnectionManager::file(location),
+        None => r2d2_sqlite::SqliteConnectionManager::memory(),
+    };
+    r2d2::Pool::new(manager).unwrap()
+}
+
+pub fn try_setup_tables(pool: &Pool) -> Result<(), String> {
     let conn = pool.get().unwrap();
-    conn.execute_batch(include_str!("../sql/setup.sql"))
-        .unwrap();
-    pool
+    let mut result = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='health_checks'")
+        .map_err(|e| e.to_string())?;
+    let row = result.query_row([], |row| row.get::<usize, String>(0));
+    if row.is_err() {
+        conn.execute_batch(include_str!("../sql/setup.sql"))
+            .map_err(|e| e.to_string())?
+    }
+    Ok(())
 }
 
 pub async fn get_health_checks(pool: &Pool) -> Result<Vec<HealthCheckRow>, String> {
@@ -62,7 +74,8 @@ pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Resul
 
 #[tokio::test]
 async fn test_insert_health_check() {
-    let pool = initialize_pool();
+    let pool = get_pool(None);
+    try_setup_tables(&pool).unwrap();
     let health_check = HealthCheckRow {
         name: "example.com".to_string(),
         status: 200,

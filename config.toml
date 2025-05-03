@@ -1,4 +1,5 @@
 interval = 10_000
+database = "health.db"
 
 [[endpoints]]
 name = "health"
