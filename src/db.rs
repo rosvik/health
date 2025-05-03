@@ -11,29 +11,8 @@ pub fn initialize_pool() -> r2d2::Pool<SqliteConnectionManager> {
 }
 
 #[derive(Deserialize)]
-pub struct EndpointPayload {
-    pub url: String,
-    pub interval: u64,
-}
-
-pub async fn add_endpoint(
-    pool: &r2d2::Pool<SqliteConnectionManager>,
-    endpoint: EndpointPayload,
-) -> Result<u64, String> {
-    let conn = pool.get().unwrap();
-
-    conn.execute(
-        "INSERT INTO endpoints (url, interval) VALUES (?, ?)",
-        [&endpoint.url, &endpoint.interval.to_string()],
-    )
-    .map_err(|e| e.to_string())?;
-
-    Ok(conn.last_insert_rowid() as u64)
-}
-
-#[derive(Deserialize)]
 pub struct HealthCheckPayload {
-    pub endpoint_id: u64,
+    pub name: String,
     pub status: u16,
     pub response_time: u64,
 }
@@ -43,11 +22,11 @@ pub async fn insert_health_check(
 ) -> Result<(), String> {
     let conn = pool.get().unwrap();
     match conn.execute(
-        "INSERT INTO observation (endpoint_id, status, response_time) VALUES (?, ?, ?)",
+        "INSERT INTO health_checks (name, status, response_time) VALUES (?, ?, ?)",
         [
-            &endpoint.endpoint_id,
-            &u64::from(endpoint.status),
-            &endpoint.response_time,
+            &endpoint.name,
+            &endpoint.status.to_string(),
+            &endpoint.response_time.to_string(),
         ],
     ) {
         Ok(_) => Ok(()),
@@ -59,29 +38,10 @@ pub async fn insert_health_check(
 }
 
 #[tokio::test]
-async fn test_add_endpoint() {
-    let pool = initialize_pool();
-    let endpoint = EndpointPayload {
-        url: "https://example.com".to_string(),
-        interval: 1000,
-    };
-    assert!(add_endpoint(&pool, endpoint).await.is_ok());
-}
-
-#[tokio::test]
 async fn test_insert_health_check() {
     let pool = initialize_pool();
-    let endpoint_id = add_endpoint(
-        &pool,
-        EndpointPayload {
-            url: "https://example.com".to_string(),
-            interval: 1000,
-        },
-    )
-    .await
-    .unwrap();
     let health_check = HealthCheckPayload {
-        endpoint_id,
+        name: "example.com".to_string(),
         status: 200,
         response_time: 100,
     };
