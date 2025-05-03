@@ -73,7 +73,7 @@ pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Resul
 }
 
 #[tokio::test]
-async fn test_insert_health_check() {
+async fn test_health_check() {
     let pool = get_pool(None);
     try_setup_tables(&pool).unwrap();
     let health_check = HealthCheckRow {
@@ -82,4 +82,10 @@ async fn test_insert_health_check() {
         response_time: 100,
     };
     assert!(insert_health_check(&pool, health_check).await.is_ok());
+
+    let health_checks = get_health_checks(&pool).await.unwrap();
+    assert_eq!(health_checks.len(), 1);
+    assert_eq!(health_checks[0].name, "example.com");
+    assert_eq!(health_checks[0].status, 200);
+    assert_eq!(health_checks[0].response_time, 100);
 }
