@@ -34,7 +34,7 @@ async fn add_endpoint(
     Json(endpoint): Json<crate::db::EndpointPayload>,
 ) -> impl IntoResponse {
     match crate::db::add_endpoint(&pool, endpoint).await {
-        Ok(_) => (StatusCode::CREATED, "Endpoint added"),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Error adding endpoint"),
+        Ok(id) => (StatusCode::CREATED, Json(id)).into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }

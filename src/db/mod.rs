@@ -19,18 +19,16 @@ pub struct EndpointPayload {
 pub async fn add_endpoint(
     pool: &r2d2::Pool<SqliteConnectionManager>,
     endpoint: EndpointPayload,
-) -> Result<(), String> {
+) -> Result<u64, String> {
     let conn = pool.get().unwrap();
-    match conn.execute(
+
+    conn.execute(
         "INSERT INTO endpoints (url, interval) VALUES (?, ?)",
         [&endpoint.url, &endpoint.interval.to_string()],
-    ) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            println!("Error adding endpoint: {}", e);
-            Err(e.to_string())
-        }
-    }
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(conn.last_insert_rowid() as u64)
 }
 
 #[derive(Deserialize)]
@@ -73,7 +71,7 @@ async fn test_add_endpoint() {
 #[tokio::test]
 async fn test_insert_health_check() {
     let pool = initialize_pool();
-    add_endpoint(
+    let endpoint_id = add_endpoint(
         &pool,
         EndpointPayload {
             url: "https://example.com".to_string(),
@@ -83,7 +81,7 @@ async fn test_insert_health_check() {
     .await
     .unwrap();
     let health_check = HealthCheckPayload {
-        endpoint_id: 0,
+        endpoint_id,
         status: 200,
         response_time: 100,
     };
