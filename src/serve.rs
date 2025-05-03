@@ -31,7 +31,11 @@ pub async fn serve(pool: Pool, config: Config) {
 }
 
 async fn handler(State(state): State<Arc<ServerState>>) -> String {
-    let mut response = format!("{CRATE_NAME} v{CRATE_VERSION}\n\n");
+    let mut response = format!("{CRATE_NAME} v{CRATE_VERSION}\n");
+
+    let config = state.config.clone();
+    response.push_str(&format!("Interval: {}ms\n\n", config.interval));
+
     for endpoint in state.config.endpoints.clone() {
         let health_checks = crate::db::get_health_checks(&state.pool, endpoint.name.clone())
             .await
