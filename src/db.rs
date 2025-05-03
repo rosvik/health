@@ -5,7 +5,7 @@ pub fn initialize_pool() -> r2d2::Pool<SqliteConnectionManager> {
     let manager = SqliteConnectionManager::memory();
     let pool = r2d2::Pool::new(manager).unwrap();
     let conn = pool.get().unwrap();
-    conn.execute_batch(include_str!("../../sql/setup.sql"))
+    conn.execute_batch(include_str!("../sql/setup.sql"))
         .unwrap();
     pool
 }
