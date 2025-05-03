@@ -49,7 +49,7 @@ pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Resul
 }
 pub async fn get_health_checks(
     pool: &Pool,
-    name: String,
+    name: &String,
     limit: u32,
 ) -> Result<Vec<HealthCheckRow>, String> {
     let conn = pool.get().unwrap();
@@ -61,7 +61,7 @@ pub async fn get_health_checks(
         .map_err(|e| e.to_string())?;
 
     let rows = stmt
-        .query_map([name, limit.to_string()], |row| {
+        .query_map([name, &limit.to_string()], |row| {
             Ok(HealthCheckRow {
                 name: row.get(0)?,
                 status: row.get(1)?,
@@ -91,7 +91,7 @@ async fn test_health_check() {
     };
     assert!(insert_health_check(&pool, health_check).await.is_ok());
 
-    let health_checks = get_health_checks(&pool, "example.com".to_string(), 100)
+    let health_checks = get_health_checks(&pool, &String::from("example.com"), 100)
         .await
         .unwrap();
     assert_eq!(health_checks.len(), 1);

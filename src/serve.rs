@@ -40,7 +40,7 @@ async fn handler(State(state): State<Arc<ServerState>>) -> String {
     response.push_str(&format!("Interval: {}s\n\n", config.interval));
 
     for endpoint in state.config.endpoints.clone() {
-        let health_checks = crate::db::get_health_checks(&state.pool, endpoint.name.clone(), 100)
+        let health_checks = crate::db::get_health_checks(&state.pool, &endpoint.name, 100)
             .await
             .unwrap();
         response.push_str(&format!(
@@ -58,7 +58,7 @@ async fn handler_with_name(
     State(state): State<Arc<ServerState>>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    let health_checks = match crate::db::get_health_checks(&state.pool, name.clone(), 1000).await {
+    let health_checks = match crate::db::get_health_checks(&state.pool, &name, 1000).await {
         Ok(health_checks) => health_checks,
         Err(_) => {
             return format!("Endpoint {} not found", name).into_response();
