@@ -23,7 +23,7 @@ pub fn try_setup_tables(pool: &Pool) -> Result<(), String> {
     Ok(())
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct HealthCheckRow {
     pub name: String,
     pub status: u16,

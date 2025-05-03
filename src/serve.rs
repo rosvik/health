@@ -74,7 +74,24 @@ async fn handler_with_name(
 
     let mut response = format!("{}\n{}\n\n", config.name, config.url);
 
-    response.push_str(&get_timeline_status(&health_checks));
+    let mut hourly_checks = Vec::new();
+    let mut current_hour = String::new();
+    for health_check in health_checks.clone() {
+        let created_at = health_check.created_at.clone().unwrap();
+        let hour = created_at.chars().take(13).collect::<String>(); // "2025-05-03 19"
+        if hour == current_hour {
+            hourly_checks.push(health_check);
+        } else {
+            response.push_str(&format!(
+                "{}: {}\n",
+                current_hour,
+                get_timeline_status(&hourly_checks)
+            ));
+            current_hour = hour;
+            hourly_checks = Vec::from([health_check]);
+        }
+    }
+
     response.push_str("\n\n");
 
     for health_check in health_checks {
