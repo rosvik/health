@@ -1,4 +1,7 @@
-use crate::{config::Config, db::Pool};
+use crate::{
+    config::Config,
+    db::{HealthCheckRow, Pool},
+};
 use axum::{
     Router,
     extract::{Path, State},
@@ -37,7 +40,7 @@ async fn handler(State(state): State<Arc<ServerState>>) -> String {
     response.push_str(&format!("Interval: {}ms\n\n", config.interval));
 
     for endpoint in state.config.endpoints.clone() {
-        let health_checks = crate::db::get_health_checks(&state.pool, endpoint.name.clone())
+        let health_checks = crate::db::get_health_checks(&state.pool, endpoint.name.clone(), 100)
             .await
             .unwrap();
         response.push_str(&format!(
@@ -45,17 +48,7 @@ async fn handler(State(state): State<Arc<ServerState>>) -> String {
             endpoint.name.clone().chars().take(15).collect::<String>()
         ));
 
-        for health_check in health_checks {
-            if health_check.status != 200 {
-                response.push('X');
-            } else if health_check.response_time > 1000 {
-                response.push('‾');
-            } else if health_check.response_time > 500 {
-                response.push('-');
-            } else {
-                response.push('_');
-            }
-        }
+        response.push_str(&get_timeline_status(&health_checks));
         response.push('\n');
     }
     response
@@ -65,7 +58,7 @@ async fn handler_with_name(
     State(state): State<Arc<ServerState>>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    let health_checks = match crate::db::get_health_checks(&state.pool, name.clone()).await {
+    let health_checks = match crate::db::get_health_checks(&state.pool, name.clone(), 1000).await {
         Ok(health_checks) => health_checks,
         Err(_) => {
             return format!("Endpoint {} not found", name).into_response();
@@ -81,6 +74,9 @@ async fn handler_with_name(
 
     let mut response = format!("{}\n{}\n\n", config.name, config.url);
 
+    response.push_str(&get_timeline_status(&health_checks));
+    response.push_str("\n\n");
+
     for health_check in health_checks {
         response.push_str(&format!(
             "{} {:?} {:?}\n",
@@ -91,4 +87,20 @@ async fn handler_with_name(
     }
 
     response.into_response()
+}
+
+fn get_timeline_status(health_checks: &Vec<HealthCheckRow>) -> String {
+    let mut response = String::new();
+    for health_check in health_checks {
+        if health_check.status != 200 {
+            response.push('X');
+        } else if health_check.response_time > 1000 {
+            response.push('‾');
+        } else if health_check.response_time > 500 {
+            response.push('-');
+        } else {
+            response.push('_');
+        }
+    }
+    response
 }

@@ -47,17 +47,21 @@ pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Resul
         }
     }
 }
-pub async fn get_health_checks(pool: &Pool, name: String) -> Result<Vec<HealthCheckRow>, String> {
+pub async fn get_health_checks(
+    pool: &Pool,
+    name: String,
+    limit: u32,
+) -> Result<Vec<HealthCheckRow>, String> {
     let conn = pool.get().unwrap();
 
     let mut stmt = conn
         .prepare(
-            "SELECT name, status, response_time, created_at FROM health_checks WHERE name = ? ORDER BY created_at DESC LIMIT 100",
+            "SELECT name, status, response_time, created_at FROM health_checks WHERE name = ? ORDER BY created_at DESC LIMIT ?",
         )
         .map_err(|e| e.to_string())?;
 
     let rows = stmt
-        .query_map([name], |row| {
+        .query_map([name, limit.to_string()], |row| {
             Ok(HealthCheckRow {
                 name: row.get(0)?,
                 status: row.get(1)?,
@@ -87,7 +91,7 @@ async fn test_health_check() {
     };
     assert!(insert_health_check(&pool, health_check).await.is_ok());
 
-    let health_checks = get_health_checks(&pool, "example.com".to_string())
+    let health_checks = get_health_checks(&pool, "example.com".to_string(), 100)
         .await
         .unwrap();
     assert_eq!(health_checks.len(), 1);
