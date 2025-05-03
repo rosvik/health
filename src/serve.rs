@@ -1,12 +1,12 @@
+use crate::db::Pool;
 use axum::{Router, routing::get};
-use r2d2_sqlite::SqliteConnectionManager;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub async fn serve(pool: r2d2::Pool<SqliteConnectionManager>) {
+pub async fn serve(pool: Pool) {
     let _pool = Arc::new(pool);
     let app = Router::new()
         .route("/", get(handler))

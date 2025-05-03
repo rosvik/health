@@ -1,8 +1,9 @@
-use r2d2_sqlite::SqliteConnectionManager;
 use serde::Deserialize;
 
-pub fn initialize_pool() -> r2d2::Pool<SqliteConnectionManager> {
-    let manager = SqliteConnectionManager::memory();
+pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
+
+pub fn initialize_pool() -> Pool {
+    let manager = r2d2_sqlite::SqliteConnectionManager::memory();
     let pool = r2d2::Pool::new(manager).unwrap();
     let conn = pool.get().unwrap();
     conn.execute_batch(include_str!("../sql/setup.sql"))
@@ -16,10 +17,7 @@ pub struct HealthCheckPayload {
     pub status: u16,
     pub response_time: u64,
 }
-pub async fn insert_health_check(
-    pool: &r2d2::Pool<SqliteConnectionManager>,
-    endpoint: HealthCheckPayload,
-) -> Result<(), String> {
+pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckPayload) -> Result<(), String> {
     let conn = pool.get().unwrap();
     match conn.execute(
         "INSERT INTO health_checks (name, status, response_time) VALUES (?, ?, ?)",

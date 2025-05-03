@@ -1,0 +1,13 @@
+interval = 10_000
+
+[[endpoints]]
+name = "health"
+url = "http://localhost:8600/health"
+
+[[endpoints]]
+name = "qore.no"
+url = "https://qore.no"
+
+[[endpoints]]
+name = "rosvik.no"
+url = "https://rosvik.no"
