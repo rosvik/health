@@ -24,6 +24,7 @@ pub async fn poll(pool: Pool, endpoint: Endpoint) {
             name: endpoint.name.clone(),
             status: status.into(),
             response_time: response_time as u64,
+            created_at: None,
         },
     )
     .await

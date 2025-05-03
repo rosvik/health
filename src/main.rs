@@ -11,7 +11,7 @@ async fn main() {
     let pool = db::get_pool(config.database.clone());
     db::try_setup_tables(&pool).unwrap();
 
-    let serve_thread = tokio::spawn(serve::serve(pool.clone()));
+    let serve_thread = tokio::spawn(serve::serve(pool.clone(), config.clone()));
     let poll_health_thread = tokio::spawn(poll::monitor(pool.clone(), config.clone()));
 
     serve_thread.await.unwrap();
