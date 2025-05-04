@@ -65,12 +65,10 @@ async fn handler_with_name(
         }
     };
 
-    let config = state
-        .config
-        .endpoints
-        .iter()
-        .find(|e| e.name == name)
-        .unwrap();
+    let config = match state.config.endpoints.iter().find(|e| e.name == name) {
+        Some(config) => config,
+        None => return (StatusCode::NOT_FOUND, "Endpoint not found").into_response(),
+    };
 
     let mut response = format!("{}\n{}\n\n", config.name, config.url);
 
