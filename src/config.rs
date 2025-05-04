@@ -22,3 +22,7 @@ impl Config {
         toml::from_str(&buffer).unwrap()
     }
 }
+
+pub fn endpoint_config(config: &Config, name: &str) -> Option<Endpoint> {
+    config.endpoints.iter().find(|e| e.name == name).cloned()
+}

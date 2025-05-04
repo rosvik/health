@@ -47,29 +47,25 @@ async fn list_checks(
     Path(name): Path<String>,
     Query(params): Query<ListParams>,
 ) -> impl IntoResponse {
-    let limit = params.limit;
-    let health_checks = match db::get_health_checks(&state.pool, &name.clone(), limit).await {
+    let health_checks = match db::get_health_checks(&state.pool, &name, params.limit).await {
         Ok(health_checks) => health_checks,
         Err(_) => return (StatusCode::NOT_FOUND, "Endpoint not found").into_response(),
     };
-
-    let config = state
-        .config
-        .endpoints
-        .iter()
-        .find(|e| e.name == name.clone())
-        .unwrap();
+    let config = match crate::config::endpoint_config(&state.config, &name) {
+        Some(config) => config,
+        None => return (StatusCode::NOT_FOUND, "Endpoint not found").into_response(),
+    };
 
     let response = ListResponse {
-        name,
-        url: config.url.clone(),
+        name: config.name,
+        url: config.url,
         interval: state.config.interval,
         checks: health_checks
             .into_iter()
             .map(|h| Check {
                 status: h.status,
                 response_time: h.response_time,
-                created_at: h.created_at.unwrap(),
+                created_at: h.created_at.unwrap_or_default(),
             })
             .collect(),
     };

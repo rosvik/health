@@ -63,12 +63,9 @@ async fn handler_with_name(
 ) -> impl IntoResponse {
     let health_checks = match crate::db::get_health_checks(&state.pool, &name, 1000).await {
         Ok(health_checks) => health_checks,
-        Err(_) => {
-            return format!("Endpoint {} not found", name).into_response();
-        }
+        Err(_) => return format!("Endpoint {} not found", name).into_response(),
     };
-
-    let config = match state.config.endpoints.iter().find(|e| e.name == name) {
+    let config = match crate::config::endpoint_config(&state.config, &name) {
         Some(config) => config,
         None => return (StatusCode::NOT_FOUND, "Endpoint not found").into_response(),
     };
