@@ -1,0 +1,12 @@
+.container {
+	display: flex;
+	flex: 1;
+	gap: 24px;
+	flex-direction: column;
+}
+.container a {
+	display: flex;
+	flex: 1;
+	gap: 12px;
+	flex-direction: column;
+}

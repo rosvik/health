@@ -1,0 +1,13 @@
+.container {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+
+.check {
+	background-color: white;
+	width: 3px;
+	height: 30px;
+	border-radius: 3px;
+}
