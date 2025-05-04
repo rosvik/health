@@ -5,3 +5,6 @@
 *.db
 dist/
 node_modules
+
+cubbyfile.toml
+config.toml
