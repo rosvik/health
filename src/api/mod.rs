@@ -10,9 +10,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub fn api_router(state: Arc<ServerState>) -> Router {
     Router::new()
-        .route("/", get(|| async { "OK" }))
+        .route(
+            "/",
+            get(|| async { format!("{CRATE_NAME} v{CRATE_VERSION}") }),
+        )
         .route("/endpoints", get(list_endpoints))
         .route("/checks/{name}", get(list_checks))
         .with_state(state)
