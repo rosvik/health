@@ -10,3 +10,11 @@
 	gap: 12px;
 	flex-direction: column;
 }
+
+.tickDemo {
+	display: flex;
+	gap: 3px;
+	position: fixed;
+	bottom: 10px;
+	right: 10px;
+}

@@ -1,5 +1,5 @@
 import { createResource, For } from "solid-js";
-import { API_BASE_URL, Check } from "../utils";
+import { API_BASE_URL, Check, mapToRange } from "../utils";
 import styles from "./Ticks.module.css";
 
 export default function Ticks({ endpointName }: { endpointName: string }) {
@@ -13,7 +13,7 @@ export default function Ticks({ endpointName }: { endpointName: string }) {
   );
 }
 
-function Tick({ check }: { check: Check }) {
+export function Tick({ check }: { check: Check }) {
   return (
     <div
       class={`${styles.check}`}
@@ -29,10 +29,7 @@ function getStatus(responseTime: number, status: number) {
   if (status !== 200) {
     return "rgb(58, 47, 215)";
   }
-
-  // 0ms -> green (hue 120)
-  // 1000ms -> red (hue 0)
-  return `hsl(${Math.max(0, 120 - responseTime / 10)}, 100.00%, 50%)`;
+  return `oklch(0.75 0.30 ${mapToRange(responseTime, [0, 1000], [150, 30])})`;
 }
 
 async function fetchChecks(endpointName: string): Promise<Check[]> {
