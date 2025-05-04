@@ -1,10 +1,12 @@
 use crate::{
+    api,
     config::Config,
     db::{HealthCheckRow, Pool},
 };
 use axum::{
     Router,
     extract::{Path, State},
+    http::StatusCode,
     response::IntoResponse,
     routing::get,
 };
@@ -14,16 +16,17 @@ use tokio::net::TcpListener;
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-struct ServerState {
-    pool: Pool,
-    config: Config,
+#[derive(Clone)]
+pub struct ServerState {
+    pub pool: Pool,
+    pub config: Config,
 }
 
 pub async fn serve(pool: Pool, config: Config) {
     let state = Arc::new(ServerState { pool, config });
     let app = Router::new()
         .route("/", get(handler))
-        .route("/health", get(|| async { "OK" }))
+        .nest_service("/api/health/v1", api::api_router(state.clone()))
         .route("/{name}", get(handler_with_name))
         .with_state(state);
 

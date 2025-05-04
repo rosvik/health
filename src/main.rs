@@ -1,5 +1,6 @@
 use config::Config;
 
+mod api;
 mod config;
 mod db;
 mod poll;
