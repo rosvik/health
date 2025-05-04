@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
-use crate::serve::ServerState;
+use crate::db;
+use crate::{config::Endpoint, serve::ServerState};
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -9,18 +8,29 @@ use axum::{
     routing::get,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
-use crate::db;
 pub fn api_router(state: Arc<ServerState>) -> Router {
     Router::new()
         .route("/", get(|| async { "OK" }))
+        .route("/endpoints", get(list_endpoints))
         .route("/checks/{name}", get(list_checks))
         .with_state(state)
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ListResponse {
+struct ListEndpointsResponse {
+    endpoints: Vec<Endpoint>,
+}
+async fn list_endpoints(State(state): State<Arc<ServerState>>) -> impl IntoResponse {
+    let endpoints = state.config.endpoints.clone();
+    (StatusCode::OK, Json(ListEndpointsResponse { endpoints })).into_response()
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ListChecksResponse {
     name: String,
     url: String,
     interval: u64,
@@ -56,7 +66,7 @@ async fn list_checks(
         None => return (StatusCode::NOT_FOUND, "Endpoint not found").into_response(),
     };
 
-    let response = ListResponse {
+    let response = ListChecksResponse {
         name: config.name,
         url: config.url,
         interval: state.config.interval,
