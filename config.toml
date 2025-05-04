@@ -3,7 +3,7 @@ database = "health.db"
 
 [[endpoints]]
 name = "health"
-url = "http://localhost:8600/health"
+url = "http://localhost:8603/api/health/v1"
 
 [[endpoints]]
 name = "qore.no"
