@@ -30,7 +30,7 @@ pub async fn serve(pool: Pool, config: Config) {
         .route("/{name}", get(handler_with_name))
         .with_state(state);
 
-    let listener = TcpListener::bind("127.0.0.1:8600").await.unwrap();
+    let listener = TcpListener::bind("127.0.0.1:8603").await.unwrap();
 
     println!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
