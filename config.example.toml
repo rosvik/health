@@ -1,0 +1,10 @@
+interval = 10
+database = "health.db"
+
+[[endpoints]]
+name = "health"
+url = "http://localhost:8603/api/health/v1"
+
+[[endpoints]]
+name = "example.com"
+url = "https://example.com"
