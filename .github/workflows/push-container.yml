@@ -1,0 +1,101 @@
+name: Push Container To Registry
+on:
+  push:
+    branches:
+      - main
+      - release-test
+    tags:
+      - v*
+
+env:
+  REGISTRY_USER: rosvik
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  REGISTRY_URL: cubby.no
+  IMAGE: rosvik/health
+  # GITHUB_REF_NAME is the tag or short branch name
+  TAG: ${{ github.ref_name }}
+
+jobs:
+  build-amd64:
+    name: Build and Push amd64 Image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE }}
+          tags: ${{ env.TAG }}-amd64
+          platforms: linux/amd64
+          oci: true
+          layers: true
+          containerfiles: |
+            Containerfile
+      - name: Push To Registry
+        id: push-to-cubby
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Print Image URL
+        run: echo "Image pushed to ${{ steps.push-to-cubby.outputs.registry-paths }}"
+
+  build-arm64:
+    name: Build and Push arm64 Image
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      # The arm runner doesn't come with buildah and podman preinstalled
+      - name: Set up Buildah and Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y buildah podman
+          printf "[registries.search] \nregistries = ['quay.io', 'docker.io']\n" > registries.conf
+          sudo mv registries.conf /etc/containers/registries.conf
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE }}
+          tags: ${{ env.TAG }}-arm64
+          platforms: linux/arm64
+          oci: true
+          layers: true
+          containerfiles: |
+            Containerfile
+      - name: Push To Registry
+        id: push-to-cubby
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Print Image URL
+        run: echo "Image pushed to ${{ steps.push-to-cubby.outputs.registry-paths }}"
+
+  build-manifest:
+    name: Create and Push Multi-Arch Manifest
+    runs-on: ubuntu-24.04
+    needs: [build-amd64, build-arm64]
+    steps:
+      - name: Create and Push Manifest
+        run: |
+          REPO=${{ env.REGISTRY_URL }}/${{ env.IMAGE }}
+          buildah manifest create $REPO:${{ env.TAG }}
+          for ARCH in amd64 arm64; do \
+            buildah manifest add $REPO:${{ env.TAG }} docker://$REPO:${{ env.TAG }}-$ARCH; \
+          done
+      - name: Push Manifest
+        run: |
+          REPO=${{ env.REGISTRY_URL }}/${{ env.IMAGE }}
+          CREDS=${{ env.REGISTRY_USER }}:${{ secrets.REGISTRY_PASSWORD }}
+          buildah manifest push --all --creds $CREDS $REPO:${{ env.TAG }}
+      - name: Cubbyman Reload
+        run: |
+          curl -X POST --user ${{ secrets.CUBBYMAN_CREDENTIALS }} https://cubby.no/cubbyman/v1/reload
