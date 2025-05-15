@@ -2,7 +2,7 @@ use crate::{api, config::Config, db::Pool};
 use axum::{Router, routing::get_service};
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 #[derive(Clone)]
 pub struct ServerState {
@@ -14,7 +14,8 @@ pub async fn serve(pool: Pool, config: Config) {
     let state = Arc::new(ServerState { pool, config });
     let app = Router::new()
         .nest_service("/api/health/v1", api::api_router(state.clone()))
-        .fallback_service(get_service(ServeDir::new("dist")))
+        .route("/assets/{path}", get_service(ServeDir::new("dist/assets")))
+        .fallback_service(get_service(ServeFile::new("dist/index.html")))
         .with_state(state);
 
     let listener = TcpListener::bind("0.0.0.0:8603").await.unwrap();
