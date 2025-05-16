@@ -14,7 +14,7 @@ pub async fn serve(pool: Pool, config: Config) {
     let state = Arc::new(ServerState { pool, config });
     let app = Router::new()
         .nest_service("/api/health/v1", api::api_router(state.clone()))
-        .route("/assets/{path}", get_service(ServeDir::new("dist/assets")))
+        .nest_service("/assets", get_service(ServeDir::new("dist/assets")))
         .fallback_service(get_service(ServeFile::new("dist/index.html")))
         .with_state(state);
 
