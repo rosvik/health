@@ -9,11 +9,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use tower_http::cors;
 
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn api_router(state: Arc<ServerState>) -> Router {
+    let cors = cors::CorsLayer::new().allow_origin(cors::Any);
     Router::new()
         .route(
             "/",
@@ -22,6 +24,7 @@ pub fn api_router(state: Arc<ServerState>) -> Router {
         .route("/endpoints", get(list_endpoints))
         .route("/checks/{name}", get(list_checks))
         .with_state(state)
+        .layer(cors)
 }
 
 #[derive(Serialize)]
