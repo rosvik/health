@@ -8,6 +8,7 @@ mod serve;
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     let config = Config::load_from_file("config.toml");
     let pool = db::get_pool(config.database.clone());
     db::try_setup_tables(&pool).unwrap();

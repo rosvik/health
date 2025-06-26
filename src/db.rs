@@ -30,7 +30,7 @@ pub struct HealthCheckRow {
     pub response_time: u64,
     pub created_at: Option<String>,
 }
-pub async fn insert_health_check(pool: &Pool, endpoint: HealthCheckRow) -> Result<(), String> {
+pub async fn insert_health_check(pool: &Pool, endpoint: &HealthCheckRow) -> Result<(), String> {
     let conn = pool.get().unwrap();
     match conn.execute(
         "INSERT INTO health_checks (name, status, response_time) VALUES (?, ?, ?)",
@@ -89,7 +89,7 @@ async fn test_health_check() {
         response_time: 100,
         created_at: None,
     };
-    assert!(insert_health_check(&pool, health_check).await.is_ok());
+    assert!(insert_health_check(&pool, &health_check).await.is_ok());
 
     let health_checks = get_health_checks(&pool, &String::from("example.com"), 100)
         .await
