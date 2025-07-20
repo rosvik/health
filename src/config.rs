@@ -6,12 +6,20 @@ pub struct Config {
     pub endpoints: Vec<Endpoint>,
     pub interval: u64,
     pub database: Option<String>,
+    pub notify: Option<Vec<Notifier>>,
+    pub notify_interval: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Endpoint {
     pub name: String,
     pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum Notifier {
+    Pushover,
 }
 
 impl Config {
